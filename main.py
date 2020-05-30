@@ -1,106 +1,153 @@
+import tkinter as tk
 import random
 from dataclasses import dataclass
+import pygame as py
 
-import pygame
+WINDOW_SIZE = 500
 
+def init():
+    window = tk.Tk()
+    window.title("Settings")
+    window.resizable(False, False)
+    window.geometry("200x100")
 
-def mainSweeper(WINDOW, GRID, TOTALMINECOUNT, DIST):
-    pygame.init()
-    screen = pygame.display.set_mode([WINDOW, WINDOW])
+    minesCount = tk.IntVar()
+    grid_size = tk.IntVar()
 
-    pygame.display.set_caption('Minesweeper By Krzysztof Greś')
+    minelabel = tk.Label(window, text="Mine Count: ")
+    minelabel.grid(row=0, column=0)
 
-    def loadfile(filename):
-        return pygame.transform.scale(pygame.image.load(filename), (DIST, DIST))
+    mineEntry = tk.Entry(window, textvariable=minesCount)
+    mineEntry.grid(row=0, column=1)
 
-    @dataclass
-    class Cell:
-        Row: int
-        Col: int
-        Mine: bool = False
-        Unc: bool = False
-        Marked: bool = False
-        Mine_Count_Neighbourhood = int = 0
+    gridlabel = tk.Label(window, text="Grid Size: ")
+    gridlabel.grid(row=1, column=0)
 
-        def show(self):
-            pos = (self.Col * DIST, self.Row * DIST)
-            if self.Unc:
-                if self.Mine:
-                    screen.blit(CELL_MINE, pos)
-                else:
-                    screen.blit(Uncovered[self.Mine_Count_Neighbourhood], pos)
+    gridEntry = tk.Entry(window, textvariable=grid_size)
+    gridEntry.grid(row=1, column=1)
+
+    def update():
+        GRID = grid_size.get()
+        TOTALMINECOUNT = minesCount.get()
+        DISTANCE = WINDOW_SIZE // GRID
+        if GRID > 30 or TOTALMINECOUNT > GRID * GRID - 1:
+            print("give smaller num \n grid < 30 must be and mines must be < GRID * GRID -1")
+        else:
+            mainSweeper(DISTANCE, GRID,TOTALMINECOUNT, window)
+
+    button_calc = tk.Button(window, text="confirm", command=update)
+    button_calc.grid(row=3, column=0)
+    window.mainloop()
+
+Matrix = []
+Uncovered = []
+adjFields = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
+                (0, 1), (1, -1), (1, 0), (1, 1)]
+
+def check_grid(y, x, GRID_SIZE):
+    return -1 < y < GRID_SIZE and -1 < x < GRID_SIZE
+
+def loadfile(filename, DISTANCE):
+        return py.transform.scale(py.image.load(filename), (DISTANCE, DISTANCE))
+
+@dataclass
+class Cell:
+    Row: int
+    Column: int
+    Mine: bool = False
+    UncoveredMine: bool = False
+    Marked: bool = False
+    Mine_Count_Neighbourhood: int = 0
+
+    def show(self, DISTANCE,screen, cell_normal,cell_marked,cell_mine):
+        pos = (self.Column * DISTANCE, self.Row * DISTANCE)
+        if self.UncoveredMine:
+            if self.Mine:
+                screen.blit(cell_mine, pos)
             else:
-                if self.Marked:
-                    screen.blit(CELL_MARKED, pos)
-                else:
-                    screen.blit(CELL_NORMAL, pos)
+                screen.blit(Uncovered[self.Mine_Count_Neighbourhood], pos)
+        else:
+            if self.Marked:
+                screen.blit(cell_marked, pos)
+            else:
+                screen.blit(cell_normal, pos)
 
-        def find_mines(self):
-            for pos in adjFields:
-                new_line, new_column = self.Row + pos[0], self.Col + pos[1]
-                if check_grid(new_line, new_column) and Matrix[new_line * GRID + new_column].Mine:
-                    self.Mine_Count_Neighbourhood += 1
+    def find_mines(self,GRID_SIZE):
+        for pos in adjFields:
+            new_line, new_column = self.Row + pos[0], self.Column + pos[1]
+            if check_grid(new_line, new_column, GRID_SIZE) and Matrix[new_line * GRID_SIZE + new_column].Mine:
+                self.Mine_Count_Neighbourhood += 1
 
-    def check_grid(y, x):
-        return -1 < y < GRID and -1 < x < GRID
-
-    CELL_NORMAL = loadfile('cellnormal.gif')
-    CELL_MARKED = loadfile('cellmarked.gif')
-    CELL_MINE = loadfile('cellmine.gif')
-    Uncovered = []
-
-    for n in range(9):
-        Uncovered.append(loadfile(f'cell{n}.gif'))
-
-    Matrix = []
-    adjFields = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
-                 (0, 1), (1, -1), (1, 0), (1, 1)]
-
-    def fill_func(row, col):
+def fill_func(row, col, GRID_SIZE):
         for pos in adjFields:
             new_line = row + pos[0]
             new_column = col + pos[1]
-            if check_grid(new_line, new_column):
-                celle = Matrix[new_line * GRID + new_column]
-                if celle.Mine_Count_Neighbourhood == 0 and not celle.Unc:
-                    celle.Unc = True
-                    fill_func(new_line, new_column)
+            if check_grid(new_line, new_column, GRID_SIZE):
+                celle = Matrix[new_line * GRID_SIZE + new_column]
+                if celle.Mine_Count_Neighbourhood == 0 and not celle.UncoveredMine:
+                    celle.UncoveredMine = True
+                    fill_func(new_line, new_column,GRID_SIZE)
                 else:
-                    celle.Unc = True
+                    celle.UncoveredMine = True
 
-    for n in range(GRID * GRID):
-        Matrix.append(Cell(n // GRID, n % GRID))
-
-    while TOTALMINECOUNT > 0:
-        cell = Matrix[random.randrange(GRID * GRID)]
-        if not cell.Mine:
+def first_click(selected_cell, mines_left,GRID_SIZE):
+    selected_cell.UncoveredMine = True
+    while mines_left > 0:
+        cell = Matrix[random.randrange(GRID_SIZE * GRID_SIZE)]
+        if not cell.Mine and cell != selected_cell:
             cell.Mine = True
-            TOTALMINECOUNT -= 1
-
+            mines_left -= 1
     for obj in Matrix:
         if not obj.Mine:
-            obj.find_mines()
+            obj.find_mines(GRID_SIZE)
+           
 
-    Cont = True
-    while Cont:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                Cont = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                mouseX, mouseY = pygame.mouse.get_pos()
-                cell = Matrix[mouseY // DIST * GRID + mouseX // DIST]
-                if pygame.mouse.get_pressed()[2]:
-                    cell.Marked = not cell.Marked
-                if pygame.mouse.get_pressed()[0]:
-                    cell.Unc = True
-                    if cell.Mine_Count_Neighbourhood == 0 and not cell.Mine:
-                        fill_func(mouseY // DIST, mouseX // DIST)
-                    if cell.Mine:
-                        for obj in Matrix:
-                            obj.Unc = True
+def mainSweeper(DISTANCE, GRID_SIZE,TOTALMINECOUNT, window):
+    py.init()
+    mines_left = TOTALMINECOUNT 
+    screen = py.display.set_mode([WINDOW_SIZE, WINDOW_SIZE])
+    py.display.set_caption('Minesweeper By Krzysztof Greś')
+
+    cell_normal = loadfile('./Cells/cellnormal.gif', DISTANCE)
+    cell_marked = loadfile('./Cells/cellmarked.gif', DISTANCE)
+    cell_mine = loadfile('./Cells/cellmine.gif', DISTANCE)
+
+    for n in range(9):
+        Uncovered.append(loadfile(f'./Cells/cell{n}.gif', DISTANCE))
+
+
+    for n in range(GRID_SIZE * GRID_SIZE):
+        Matrix.append(Cell(n // GRID_SIZE, n % GRID_SIZE))
+    
+    flag = True
+    ongoing = True
+    while ongoing:
+        for event in py.event.get():
+            if event.type == py.QUIT:
+                ongoing = False
+            if event.type == py.MOUSEBUTTONDOWN:
+                
+                mouseX, mouseY = py.mouse.get_pos()
+                cell = Matrix[mouseY // DISTANCE * GRID_SIZE + mouseX // DISTANCE]
+                if flag == True:
+                    first_click(cell, mines_left, GRID_SIZE)
+                if flag == False:
+                    if py.mouse.get_pressed()[2]:
+                        cell.Marked = not cell.Marked
+                    if py.mouse.get_pressed()[0]:
+                        cell.UncoveredMine = True
+                        if cell.Mine_Count_Neighbourhood == 0 and not cell.Mine:
+                            fill_func(mouseY // DISTANCE, mouseX // DISTANCE, GRID_SIZE)
+                        if cell.Mine:
+                            for obj in Matrix:
+                                obj.UncoveredMine = True
+                flag = False
 
         for obj in Matrix:
-            obj.show()
-        pygame.display.flip()
+            obj.show(DISTANCE,screen,cell_normal,cell_marked,cell_mine)
+        py.display.flip()
 
-    pygame.quit()
+    py.quit()
+    window.destroy()
+
+init()
