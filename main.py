@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 from dataclasses import dataclass
 import pygame as py
+import sys
 
 WINDOW_SIZE = 500
 
@@ -100,11 +101,25 @@ def first_click(selected_cell, mines_left,GRID_SIZE):
     for obj in Matrix:
         if not obj.Mine:
             obj.find_mines(GRID_SIZE)
-           
+
+
+def test(winorloose, screen):
+    font = py.font.SysFont("comicsansms", 50)
+    if winorloose == True:
+        text = font.render("U win", True, (0, 128, 0))
+    else:
+        text = font.render("U loose", True, (0, 128, 0))
+
+    screen.fill((255, 255, 255))
+    screen.blit(text,
+        (250 - text.get_width() // 2, 240 - text.get_height() // 2))
+    
+    py.display.flip()
 
 def mainSweeper(DISTANCE, GRID_SIZE,TOTALMINECOUNT, window):
     py.init()
     mines_left = TOTALMINECOUNT 
+    flags_on_mines = 0
     screen = py.display.set_mode([WINDOW_SIZE, WINDOW_SIZE])
     py.display.set_caption('Minesweeper By Krzysztof Greś')
 
@@ -126,7 +141,6 @@ def mainSweeper(DISTANCE, GRID_SIZE,TOTALMINECOUNT, window):
             if event.type == py.QUIT:
                 ongoing = False
             if event.type == py.MOUSEBUTTONDOWN:
-                
                 mouseX, mouseY = py.mouse.get_pos()
                 cell = Matrix[mouseY // DISTANCE * GRID_SIZE + mouseX // DISTANCE]
                 if flag == True:
@@ -134,6 +148,14 @@ def mainSweeper(DISTANCE, GRID_SIZE,TOTALMINECOUNT, window):
                 if flag == False:
                     if py.mouse.get_pressed()[2]:
                         cell.Marked = not cell.Marked
+                        if cell.Mine:
+                            flags_on_mines += 1
+                            print(1)
+                        if flags_on_mines == TOTALMINECOUNT:
+                            test(True,screen)
+                            ongoing = False
+                            py.time.wait(5000)
+
                     if py.mouse.get_pressed()[0]:
                         cell.UncoveredMine = True
                         if cell.Mine_Count_Neighbourhood == 0 and not cell.Mine:
@@ -141,13 +163,15 @@ def mainSweeper(DISTANCE, GRID_SIZE,TOTALMINECOUNT, window):
                         if cell.Mine:
                             for obj in Matrix:
                                 obj.UncoveredMine = True
+                            test(False,screen)
+                            ongoing = False
+                            py.time.wait(5000)
                 flag = False
-
         for obj in Matrix:
             obj.show(DISTANCE,screen,cell_normal,cell_marked,cell_mine)
         py.display.flip()
 
-    py.quit()
+    py.display.quit()
     window.destroy()
 
 init()
