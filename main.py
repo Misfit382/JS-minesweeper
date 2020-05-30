@@ -1,8 +1,7 @@
-"""Minesweeper"""
-import random
+"""minesweeper python game"""
 import tkinter as tk
+import random
 from dataclasses import dataclass
-
 import pygame as py
 
 WINDOW_SIZE = 500
@@ -31,13 +30,14 @@ def init():
     grid_entry.grid(row=1, column=1)
 
     def update():
-        grid = grid_size.get()
-        total_mine_count = mines_count.get()
-        distance = WINDOW_SIZE // grid
-        if grid > 30 or total_mine_count > grid * grid - 1:
+        """update vars"""
+        get_grid = grid_size.get()
+        get_mine_count = mines_count.get()
+        distance = WINDOW_SIZE // get_grid
+        if get_grid > 30 or get_mine_count > get_grid * get_grid - 1:
             print("give smaller num \n grid < 30 must be and mines must be < GRID * GRID -1")
         else:
-            main_sweeper(distance, grid, total_mine_count, window)
+            main_sweeper(distance, get_grid, get_mine_count, window)
 
     button_calc = tk.Button(window, text="confirm", command=update)
     button_calc.grid(row=3, column=0)
@@ -56,7 +56,7 @@ def check_grid(y_axis, x_axis, grid_size):
 
 
 def loadfile(filename, distance):
-    """loading files"""
+    """loading files from Cells folder"""
     return py.transform.scale(py.image.load(filename), (distance, distance))
 
 
@@ -70,9 +70,8 @@ class Cell:
     cell_marked: bool = False
     cell_mine_count_neighbourhood: int = 0
 
-    def show(self, distance, screen, cell_normal,
-             cell_marked, cell_mine):
-        """shows the things in window"""
+    def show(self, distance, screen, cell_normal, cell_marked, cell_mine):
+        """showing obj on boards"""
         pos = (self.cell_column * distance, self.cell_row * distance)
         if self.cell_uncovered_mine:
             if self.cell_mine:
@@ -86,16 +85,16 @@ class Cell:
                 screen.blit(cell_normal, pos)
 
     def find_mines(self, grid_size):
-        """finding mines"""
+        """finding_mines"""
         for pos in adjFields:
             new_line, new_column = self.cell_row + pos[0], self.cell_column + pos[1]
-            if check_grid(new_line, new_column, grid_size) and\
-                    Matrix[new_line * grid_size + new_column].cell_mine:
+            if check_grid(new_line, new_column, grid_size)\
+                    and Matrix[new_line * grid_size + new_column].cell_mine:
                 self.cell_mine_count_neighbourhood += 1
 
 
 def fill_func(row, col, grid_size):
-    """filling cells with proper gifs"""
+    """filling with proper gifs"""
     for pos in adjFields:
         new_line = row + pos[0]
         new_column = col + pos[1]
@@ -109,20 +108,20 @@ def fill_func(row, col, grid_size):
 
 
 def first_click(selected_cell, mines_left, grid_size):
-    """first click action"""
+    """first click func"""
     selected_cell.cell_uncovered_mine = True
     while mines_left > 0:
         cell = Matrix[random.randrange(grid_size * grid_size)]
         if not cell.cell_mine and cell != selected_cell:
             cell.cell_mine = True
             mines_left -= 1
-    for obj in Matrix:
-        if not obj.cell_mine:
-            obj.find_mines(grid_size)
+    for object_in_matrix in Matrix:
+        if not object_in_matrix.cell_mine:
+            object_in_matrix.find_mines(grid_size)
 
 
 def end_screen(win_or_loose, screen):
-    """END OF A GAME"""
+    """end screen"""
     font = py.font.SysFont("comicsansms", 50)
     if win_or_loose:
         text = font.render("U win", True, (0, 128, 0))
@@ -137,8 +136,8 @@ def end_screen(win_or_loose, screen):
 
 
 def main_sweeper(distance, grid_size, total_mine_count, window):
-    """main function that runs game"""
-    py.display.init()
+    """main func that runs game"""
+    py.init()
     mines_left = total_mine_count
     flags_on_mines = 0
     screen = py.display.set_mode([WINDOW_SIZE, WINDOW_SIZE])
@@ -154,7 +153,8 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     for cell_in_grid in range(grid_size * grid_size):
         Matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
 
-    flag = ongoing = True
+    flag = True
+    ongoing = True
     while ongoing:
         for event in py.event.get():
             if event.type == py.QUIT:
