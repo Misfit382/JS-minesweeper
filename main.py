@@ -55,11 +55,6 @@ def check_grid(y_axis, x_axis, grid_size):
     return -1 < y_axis < grid_size and -1 < x_axis < grid_size
 
 
-def loadfile(filename, distance):
-    """loading files from Cells folder"""
-    return py.transform.scale(py.image.load(filename), (distance, distance))
-
-
 @dataclass
 class Cell:
     """cell object"""
@@ -88,9 +83,18 @@ class Cell:
         """finding_mines"""
         for pos in adjFields:
             new_line, new_column = self.cell_row + pos[0], self.cell_column + pos[1]
-            if check_grid(new_line, new_column, grid_size)\
+            if check_grid(new_line, new_column, grid_size) \
                     and Matrix[new_line * grid_size + new_column].cell_mine:
                 self.cell_mine_count_neighbourhood += 1
+
+
+class Assets:
+    """Zasoby potrzebne do gry."""
+
+    @staticmethod
+    def loadfile(filename, distance):
+        """loading files from Cells folder"""
+        return py.transform.scale(py.image.load(filename), (distance, distance))
 
 
 def fill_func(row, col, grid_size):
@@ -143,12 +147,12 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     screen = py.display.set_mode([WINDOW_SIZE, WINDOW_SIZE])
     py.display.set_caption('Minesweeper By Krzysztof Greś')
 
-    cell_normal = loadfile('./Cells/cellnormal.gif', distance)
-    cell_marked = loadfile('./Cells/cellmarked.gif', distance)
-    cell_mine = loadfile('./Cells/cellmine.gif', distance)
+    cell_normal = Assets.loadfile('./Cells/cellnormal.gif', distance)
+    cell_marked = Assets.loadfile('./Cells/cellmarked.gif', distance)
+    cell_mine = Assets.loadfile('./Cells/cellmine.gif', distance)
 
     for cell_in_grid in range(9):
-        Uncovered.append(loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
+        Uncovered.append(Assets.loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
 
     for cell_in_grid in range(grid_size * grid_size):
         Matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
