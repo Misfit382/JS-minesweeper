@@ -66,7 +66,7 @@ class Cell:
     cell_mine_count_neighbourhood: int = 0
     cheat_mine: bool = False
 
-    def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, flag):
+    def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine):
         """showing obj on boards"""
         pos = (self.cell_column * distance, self.cell_row * distance)
         if self.cell_uncovered_mine:
@@ -212,7 +212,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                 flag = False
 
         for obj in Matrix:
-            obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, True)
+            obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine)
 
         py.display.flip()
 
