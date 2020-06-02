@@ -64,8 +64,9 @@ class Cell:
     cell_uncovered_mine: bool = False
     cell_marked: bool = False
     cell_mine_count_neighbourhood: int = 0
+    cheat_mine: bool = False
 
-    def show(self, distance, screen, cell_normal, cell_marked, cell_mine):
+    def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, flag):
         """showing obj on boards"""
         pos = (self.cell_column * distance, self.cell_row * distance)
         if self.cell_uncovered_mine:
@@ -78,6 +79,10 @@ class Cell:
                 screen.blit(cell_marked, pos)
             else:
                 screen.blit(cell_normal, pos)
+        if self.cheat_mine:
+            screen.blit(cheat_mine, pos)
+            if self.cell_marked:
+                screen.blit(cell_marked, pos)
 
     def find_mines(self, grid_size):
         """finding_mines"""
@@ -124,6 +129,7 @@ def first_click(selected_cell, mines_left, grid_size):
             object_in_matrix.find_mines(grid_size)
 
 
+
 def end_screen(win_or_loose, screen):
     """end screen"""
     font = py.font.SysFont("comicsansms", 50)
@@ -150,7 +156,10 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     cell_normal = Assets.loadfile('./Cells/cellnormal.gif', distance)
     cell_marked = Assets.loadfile('./Cells/cellmarked.gif', distance)
     cell_mine = Assets.loadfile('./Cells/cellmine.gif', distance)
+    cheat_mine = Assets.loadfile('./Cells/cell_cheat.gif', distance)
 
+    cheat_input = ''
+    cheat_thing = 'zxyyxz'
     for cell_in_grid in range(9):
         Uncovered.append(Assets.loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
 
@@ -163,7 +172,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
         for event in py.event.get():
             if event.type == py.QUIT:
                 ongoing = False
-            if event.type == py.MOUSEBUTTONDOWN:
+            if event.type == py.MOUSEBUTTONDOWN or event.type == py.KEYDOWN:
                 mouse_x, mouse_y = py.mouse.get_pos()
                 cell = Matrix[mouse_y // distance * grid_size + mouse_x // distance]
                 if flag:
@@ -173,11 +182,13 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                         cell.cell_marked = not cell.cell_marked
                         if cell.cell_mine:
                             flags_on_mines += 1
-                            print(1)
                         if flags_on_mines == total_mine_count:
+                            for obj in Matrix:
+                                obj.cell_uncovered_mine = True
+                            py.time.wait(2000)
                             end_screen(True, screen)
                             ongoing = False
-                            py.time.wait(5000)
+                            py.time.wait(3000)
 
                     if py.mouse.get_pressed()[0]:
                         cell.cell_uncovered_mine = True
@@ -186,12 +197,23 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                         if cell.cell_mine:
                             for obj in Matrix:
                                 obj.cell_uncovered_mine = True
+                            py.time.wait(2000)
                             end_screen(False, screen)
                             ongoing = False
-                            py.time.wait(5000)
+                            py.time.wait(3000)
+                if event.type == py.KEYDOWN and not flag:
+                    cheat_input += event.unicode
+                    if event.key == py.K_BACKSPACE:
+                        cheat_input = ''
+                    if cheat_input == cheat_thing:
+                        for obj in Matrix:
+                            if obj.cell_mine:
+                                obj.cheat_mine = True
                 flag = False
+
         for obj in Matrix:
-            obj.show(distance, screen, cell_normal, cell_marked, cell_mine)
+            obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, True)
+
         py.display.flip()
 
     py.display.quit()
