@@ -1,53 +1,17 @@
 """minesweeper python game"""
-import tkinter as tk
-import random
 from dataclasses import dataclass
+import random
+
+import tkinter as tk
 import pygame as py
 
 WINDOW_SIZE = 500
 
+ADJACENT_FIELDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
+                   (0, 1), (1, -1), (1, 0), (1, 1)]
 
-def init():
-    """initialize gui"""
-    window = tk.Tk()
-    window.title("Settings")
-    window.resizable(False, False)
-    window.geometry("200x100")
-
-    mines_count = tk.IntVar()
-    grid_size = tk.IntVar()
-
-    mine_label = tk.Label(window, text="Mine Count: ")
-    mine_label.grid(row=0, column=0)
-
-    mine_entry = tk.Entry(window, textvariable=mines_count)
-    mine_entry.grid(row=0, column=1)
-
-    grid_label = tk.Label(window, text="Grid Size: ")
-    grid_label.grid(row=1, column=0)
-
-    grid_entry = tk.Entry(window, textvariable=grid_size)
-    grid_entry.grid(row=1, column=1)
-
-    def update():
-        """update vars"""
-        get_grid = grid_size.get()
-        get_mine_count = mines_count.get()
-        distance = WINDOW_SIZE // get_grid
-        if get_grid > 30 or get_mine_count > get_grid * get_grid - 1:
-            print("give smaller num \n grid < 30 must be and mines must be < GRID * GRID -1")
-        else:
-            main_sweeper(distance, get_grid, get_mine_count, window)
-
-    button_calc = tk.Button(window, text="confirm", command=update)
-    button_calc.grid(row=3, column=0)
-    window.mainloop()
-
-
-Matrix = []
-Uncovered = []
-adjFields = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
-             (0, 1), (1, -1), (1, 0), (1, 1)]
+matrix = []
+uncovered = []
 
 
 def check_grid(y_axis, x_axis, grid_size):
@@ -73,7 +37,7 @@ class Cell:
             if self.cell_mine:
                 screen.blit(cell_mine, pos)
             else:
-                screen.blit(Uncovered[self.cell_mine_count_neighbourhood], pos)
+                screen.blit(uncovered[self.cell_mine_count_neighbourhood], pos)
         else:
             if self.cell_marked:
                 screen.blit(cell_marked, pos)
@@ -86,10 +50,10 @@ class Cell:
 
     def find_mines(self, grid_size):
         """finding_mines"""
-        for pos in adjFields:
+        for pos in ADJACENT_FIELDS:
             new_line, new_column = self.cell_row + pos[0], self.cell_column + pos[1]
             if check_grid(new_line, new_column, grid_size) \
-                    and Matrix[new_line * grid_size + new_column].cell_mine:
+                    and matrix[new_line * grid_size + new_column].cell_mine:
                 self.cell_mine_count_neighbourhood += 1
 
 
@@ -102,13 +66,19 @@ class Assets:
         return py.transform.scale(py.image.load(filename), (distance, distance))
 
 
+class Colors:
+    """Paleta barw."""
+    WHITE = (255, 255, 255)
+    GREEN = (0, 128, 0)
+
+
 def fill_func(row, col, grid_size):
     """filling with proper gifs"""
-    for pos in adjFields:
+    for pos in ADJACENT_FIELDS:
         new_line = row + pos[0]
         new_column = col + pos[1]
         if check_grid(new_line, new_column, grid_size):
-            celle = Matrix[new_line * grid_size + new_column]
+            celle = matrix[new_line * grid_size + new_column]
             if celle.cell_mine_count_neighbourhood == 0 and not celle.cell_uncovered_mine:
                 celle.cell_uncovered_mine = True
                 fill_func(new_line, new_column, grid_size)
@@ -120,25 +90,24 @@ def first_click(selected_cell, mines_left, grid_size):
     """first click func"""
     selected_cell.cell_uncovered_mine = True
     while mines_left > 0:
-        cell = Matrix[random.randrange(grid_size * grid_size)]
+        cell = matrix[random.randrange(grid_size * grid_size)]
         if not cell.cell_mine and cell != selected_cell:
             cell.cell_mine = True
             mines_left -= 1
-    for object_in_matrix in Matrix:
+    for object_in_matrix in matrix:
         if not object_in_matrix.cell_mine:
             object_in_matrix.find_mines(grid_size)
-
 
 
 def end_screen(win_or_loose, screen):
     """end screen"""
     font = py.font.SysFont("comicsansms", 50)
     if win_or_loose:
-        text = font.render("U win", True, (0, 128, 0))
+        text = font.render("U win", True, Colors.GREEN)
     else:
-        text = font.render("U loose", True, (0, 128, 0))
+        text = font.render("U loose", True, Colors.GREEN)
 
-    screen.fill((255, 255, 255))
+    screen.fill(Colors.WHITE)
     screen.blit(text,
                 (250 - text.get_width() // 2, 240 - text.get_height() // 2))
 
@@ -161,12 +130,12 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     cheat_input = ''
     cheat_thing = 'zxyyxz'
     for cell_in_grid in range(9):
-        Uncovered.append(Assets.loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
+        uncovered.append(Assets.loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
 
     for cell_in_grid in range(grid_size * grid_size):
-        Matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
+        matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
 
-    flag = True
+    first_click_todo = True
     ongoing = True
     while ongoing:
         for event in py.event.get():
@@ -174,16 +143,16 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                 ongoing = False
             if event.type == py.MOUSEBUTTONDOWN or event.type == py.KEYDOWN:
                 mouse_x, mouse_y = py.mouse.get_pos()
-                cell = Matrix[mouse_y // distance * grid_size + mouse_x // distance]
-                if flag:
+                cell = matrix[mouse_y // distance * grid_size + mouse_x // distance]
+                if first_click_todo:
                     first_click(cell, mines_left, grid_size)
-                if not flag:
+                if not first_click_todo:
                     if py.mouse.get_pressed()[2]:
                         cell.cell_marked = not cell.cell_marked
                         if cell.cell_mine:
                             flags_on_mines += 1
                         if flags_on_mines == total_mine_count:
-                            for obj in Matrix:
+                            for obj in matrix:
                                 obj.cell_uncovered_mine = True
                             py.time.wait(2000)
                             end_screen(True, screen)
@@ -195,23 +164,23 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                         if cell.cell_mine_count_neighbourhood == 0 and not cell.cell_mine:
                             fill_func(mouse_y // distance, mouse_x // distance, grid_size)
                         if cell.cell_mine:
-                            for obj in Matrix:
+                            for obj in matrix:
                                 obj.cell_uncovered_mine = True
                             py.time.wait(2000)
                             end_screen(False, screen)
                             ongoing = False
                             py.time.wait(3000)
-                if event.type == py.KEYDOWN and not flag:
+                if event.type == py.KEYDOWN and not first_click_todo:
                     cheat_input += event.unicode
                     if event.key == py.K_BACKSPACE:
                         cheat_input = ''
                     if cheat_input == cheat_thing:
-                        for obj in Matrix:
+                        for obj in matrix:
                             if obj.cell_mine:
                                 obj.cheat_mine = True
-                flag = False
+                first_click_todo = False
 
-        for obj in Matrix:
+        for obj in matrix:
             obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine)
 
         py.display.flip()
@@ -220,4 +189,46 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     window.destroy()
 
 
-init()
+def main():
+    """initialize gui"""
+    window = tk.Tk()
+    window.title("Settings")
+    window.resizable(False, False)
+    window.geometry("200x100")
+
+    mines_count = tk.IntVar()
+    grid_size = tk.IntVar()
+
+    mine_label = tk.Label(window, text="Mine Count: ")
+    mine_label.grid(row=0, column=0)
+
+    mine_entry = tk.Entry(window, textvariable=mines_count)
+    mine_entry.grid(row=0, column=1)
+
+    grid_label = tk.Label(window, text="Grid Size: ")
+    grid_label.grid(row=1, column=0)
+
+    grid_entry = tk.Entry(window, textvariable=grid_size)
+    grid_entry.grid(row=1, column=1)
+
+    grid_entry.insert(0, "1")
+    mine_entry.insert(0, "5")
+
+
+    def update():
+        """update vars"""
+        get_grid = grid_size.get()
+        get_mine_count = mines_count.get()
+        distance = WINDOW_SIZE // get_grid
+        if get_grid > 30 or get_mine_count > get_grid * get_grid - 1:
+            print("give smaller num \n grid < 30 must be and mines must be < GRID * GRID -1")
+        else:
+            main_sweeper(distance, get_grid, get_mine_count, window)
+
+    button_calc = tk.Button(window, text="confirm", command=update)
+    button_calc.grid(row=3, column=0)
+    window.mainloop()
+
+
+if __name__ == '__main__':
+    main()
