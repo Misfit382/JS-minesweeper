@@ -1,9 +1,11 @@
-"""Testy modułu spam."""
+"""Testy modułu main."""
 import main
 import unittest
 
 
 class CellTest(unittest.TestCase):
+    """Testy klasy cell."""
+
     def setUp(self):
         self.cell = main.Cell(cell_row=1, cell_column=1, cell_mine=False, cell_uncovered_mine=False, cell_marked=False,
                               cell_mine_count_neighbourhood=0, cheat_mine=False)
@@ -25,6 +27,8 @@ class CellTest(unittest.TestCase):
 
 
 class TestAssets(unittest.TestCase):
+    """Testy klasy Assets."""
+
     def setUp(self):
         self.assets = main.Assets()
 
@@ -35,6 +39,8 @@ class TestAssets(unittest.TestCase):
 
 
 class TestColors(unittest.TestCase):
+    """Testy klasy od kolorów."""
+
     def setUp(self):
         self.color = main.Colors()
 
