@@ -1,17 +1,49 @@
 """Testy modułu spam."""
-import pytest
 import main
+import unittest
 
 
-def test_1():
-    if main.check_grid(5, 7, 10):
-        assert True
+class CellTest(unittest.TestCase):
+    def setUp(self):
+        self.cell = main.Cell(cell_row=1, cell_column=1, cell_mine=False, cell_uncovered_mine=False, cell_marked=False,
+                              cell_mine_count_neighbourhood=0, cheat_mine=False)
+
+    def test_marked(self):
+        self.assertFalse(self.cell.cell_marked)
+
+    def test_mine(self):
+        self.assertFalse(self.cell.cell_mine)
+
+    def test_cheat(self):
+        self.assertFalse(self.cell.cheat_mine)
+
+    def test_uncovered(self):
+        self.assertFalse(self.cell.cell_uncovered_mine)
+
+    def test_find_mines(self):
+        self.assertFalse(self.cell.find_mines(0))
 
 
-def test_2():
-    if main.Assets.loadfile("./Cells/cell1.gif", 500 // 10):
-        assert True
+class TestAssets(unittest.TestCase):
+    def setUp(self):
+        self.assets = main.Assets()
+
+    def test_load_file(self):
+        path = "./Cells/cell1.gif"
+        distance = 500 // 10
+        self.assertTrue(self.assets.loadfile(path, distance))
+
+
+class TestColors(unittest.TestCase):
+    def setUp(self):
+        self.color = main.Colors()
+
+    def test_green(self):
+        self.assertEqual(self.color.GREEN, (0, 128, 0))
+
+    def test_WHITE(self):
+        self.assertEqual(self.color.GREEN, (255, 255, 255))
 
 
 if __name__ == '__main__':
-    pytest.main()
+    unittest.main()
