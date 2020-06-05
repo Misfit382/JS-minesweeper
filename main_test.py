@@ -48,7 +48,7 @@ class TestColors(unittest.TestCase):
         self.assertEqual(self.color.GREEN, (0, 128, 0))
 
     def test_WHITE(self):
-        self.assertEqual(self.color.GREEN, (255, 255, 255))
+        self.assertEqual(self.color.WHITE, (255, 255, 255))
 
 
 if __name__ == '__main__':
