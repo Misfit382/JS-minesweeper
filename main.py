@@ -1,17 +1,14 @@
 """minesweeper python game"""
 from dataclasses import dataclass
 import random
-
 import tkinter as tk
+
 import pygame as py
 
 WINDOW_SIZE = 500
 
 ADJACENT_FIELDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
                    (0, 1), (1, -1), (1, 0), (1, 1)]
-
-matrix = []
-uncovered = []
 
 
 def check_grid(y_axis, x_axis, grid_size):
@@ -30,7 +27,7 @@ class Cell:
     cell_mine_count_neighbourhood: int = 0
     cheat_mine: bool = False
 
-    def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine):
+    def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, uncovered):
         """showing obj on boards"""
         pos = (self.cell_column * distance, self.cell_row * distance)
         if self.cell_uncovered_mine:
@@ -48,7 +45,7 @@ class Cell:
             if self.cell_marked:
                 screen.blit(cell_marked, pos)
 
-    def find_mines(self, grid_size):
+    def find_mines(self, grid_size, matrix):
         """finding_mines"""
         for pos in ADJACENT_FIELDS:
             new_line, new_column = self.cell_row + pos[0], self.cell_column + pos[1]
@@ -72,7 +69,7 @@ class Colors:
     GREEN = (0, 128, 0)
 
 
-def fill_func(row, col, grid_size):
+def fill_func(row, col, grid_size, matrix):
     """filling with proper gifs"""
     for pos in ADJACENT_FIELDS:
         new_line = row + pos[0]
@@ -81,12 +78,12 @@ def fill_func(row, col, grid_size):
             celle = matrix[new_line * grid_size + new_column]
             if celle.cell_mine_count_neighbourhood == 0 and not celle.cell_uncovered_mine:
                 celle.cell_uncovered_mine = True
-                fill_func(new_line, new_column, grid_size)
+                fill_func(new_line, new_column, grid_size, matrix)
             else:
                 celle.cell_uncovered_mine = True
 
 
-def first_click(selected_cell, mines_left, grid_size):
+def first_click(selected_cell, mines_left, grid_size, matrix):
     """first click func"""
     selected_cell.cell_uncovered_mine = True
     while mines_left > 0:
@@ -96,7 +93,7 @@ def first_click(selected_cell, mines_left, grid_size):
             mines_left -= 1
     for object_in_matrix in matrix:
         if not object_in_matrix.cell_mine:
-            object_in_matrix.find_mines(grid_size)
+            object_in_matrix.find_mines(grid_size, matrix)
 
 
 def end_screen(win_or_loose, screen):
@@ -117,6 +114,8 @@ def end_screen(win_or_loose, screen):
 def main_sweeper(distance, grid_size, total_mine_count, window):
     """main func that runs game"""
     py.init()
+    matrix = []
+    uncovered = []
     mines_left = total_mine_count
     flags_on_mines = 0
     screen = py.display.set_mode([WINDOW_SIZE, WINDOW_SIZE])
@@ -145,7 +144,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                 mouse_x, mouse_y = py.mouse.get_pos()
                 cell = matrix[mouse_y // distance * grid_size + mouse_x // distance]
                 if first_click_todo:
-                    first_click(cell, mines_left, grid_size)
+                    first_click(cell, mines_left, grid_size, matrix)
                 if not first_click_todo:
                     if py.mouse.get_pressed()[2]:
                         cell.cell_marked = not cell.cell_marked
@@ -162,7 +161,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                     if py.mouse.get_pressed()[0]:
                         cell.cell_uncovered_mine = True
                         if cell.cell_mine_count_neighbourhood == 0 and not cell.cell_mine:
-                            fill_func(mouse_y // distance, mouse_x // distance, grid_size)
+                            fill_func(mouse_y // distance, mouse_x // distance, grid_size, matrix)
                         if cell.cell_mine:
                             for obj in matrix:
                                 obj.cell_uncovered_mine = True
@@ -181,7 +180,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
                 first_click_todo = False
 
         for obj in matrix:
-            obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine)
+            obj.show(distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, uncovered)
 
         py.display.flip()
 
@@ -213,7 +212,6 @@ def main():
 
     grid_entry.insert(0, "1")
     mine_entry.insert(0, "5")
-
 
     def update():
         """update vars"""
