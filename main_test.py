@@ -25,8 +25,16 @@ class CellTest(unittest.TestCase):
         self.assertFalse(self.cell.find_mines(0, matrix))
 
     def test_fill_func(self):
-        matrix = []
-        self.assertIsNone(main.fill_func(5, 1, 0, matrix))
+        matrix = main.init_matrix(3)
+        matrix[1*1+1].set_mine()
+
+        main.fill_func(1, 1, 3, matrix)
+        bool_matrix = [[x.cell_uncovered_mine for x in row]for row in matrix]
+        self.assertEqual(
+            bool_matrix,
+            [[True, False, False],
+             [False, False, False],
+             [False, False, False]])
 
 
 class TestAssets(unittest.TestCase):

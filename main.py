@@ -1,8 +1,8 @@
 """minesweeper python game"""
 from dataclasses import dataclass
 import random
-import tkinter as tk
 
+import tkinter as tk
 import pygame as py
 
 WINDOW_SIZE = 500
@@ -26,6 +26,9 @@ class Cell:
     cell_marked: bool = False
     cell_mine_count_neighbourhood: int = 0
     cheat_mine: bool = False
+
+    def set_mine(self):
+        self.cell_mine = True
 
     def show(self, distance, screen, cell_normal, cell_marked, cell_mine, cheat_mine, uncovered):
         """showing obj on boards"""
@@ -75,8 +78,8 @@ def fill_func(row, col, grid_size, matrix):
         new_line = row + pos[0]
         new_column = col + pos[1]
         if check_grid(new_line, new_column, grid_size):
-            celle = matrix[new_line * grid_size + new_column]
-            if celle.cell_mine_count_neighbourhood == 0 and not celle.cell_uncovered_mine:
+            celle = [new_line * grid_size + new_column]
+            if celle.cell_mine_count_neigmatrixhbourhood == 0 and not celle.cell_uncovered_mine:
                 celle.cell_uncovered_mine = True
                 fill_func(new_line, new_column, grid_size, matrix)
             else:
@@ -94,6 +97,13 @@ def first_click(selected_cell, mines_left, grid_size, matrix):
     for object_in_matrix in matrix:
         if not object_in_matrix.cell_mine:
             object_in_matrix.find_mines(grid_size, matrix)
+
+
+def init_matrix(grid_size):
+    matrix = []
+    for cell_in_grid in range(grid_size * grid_size):
+        matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
+    return matrix
 
 
 def end_screen(win_or_loose, screen):
@@ -114,7 +124,6 @@ def end_screen(win_or_loose, screen):
 def main_sweeper(distance, grid_size, total_mine_count, window):
     """main func that runs game"""
     py.init()
-    matrix = []
     uncovered = []
     mines_left = total_mine_count
     flags_on_mines = 0
@@ -131,9 +140,7 @@ def main_sweeper(distance, grid_size, total_mine_count, window):
     for cell_in_grid in range(9):
         uncovered.append(Assets.loadfile(f'./Cells/cell{cell_in_grid}.gif', distance))
 
-    for cell_in_grid in range(grid_size * grid_size):
-        matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
-
+    matrix = init_matrix(grid_size)
     first_click_todo = True
     ongoing = True
     while ongoing:
