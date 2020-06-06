@@ -11,8 +11,6 @@ ADJACENT_FIELDS = [(-1, -1), (-1, 0), (-1, 1), (0, -1),
                    (0, 1), (1, -1), (1, 0), (1, 1)]
 
 
-
-
 def check_grid(y_axis, x_axis, grid_size):
     """checking grid"""
     return -1 < y_axis < grid_size and -1 < x_axis < grid_size
@@ -73,11 +71,13 @@ class Colors:
     WHITE = (255, 255, 255)
     GREEN = (0, 128, 0)
 
-def init_matrix( grid_size):
+
+def init_matrix(grid_size):
     matrix = []
     for cell_in_grid in range(grid_size * grid_size):
         matrix.append(Cell(cell_in_grid // grid_size, cell_in_grid % grid_size))
     return matrix
+
 
 def fill_func(row, col, grid_size, matrix):
     """filling with proper gifs"""
@@ -221,7 +221,6 @@ def main():
 
     grid_entry.insert(0, "1")
     mine_entry.insert(0, "5")
-
 
     def update():
         """update vars"""
