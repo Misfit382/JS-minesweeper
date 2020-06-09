@@ -29,13 +29,30 @@ class CellTest(unittest.TestCase):
         matrix = main.init_matrix(grid_size)
         matrix[0].set_mine()
 
-        main.fill_func(1, 1, 3, matrix)
+        main.fill_func(2, 2, 3, matrix)
         bool_matrix = [True, False, False,
                        False, False, False,
                        False, False, False]
         for i in range(grid_size * grid_size):
             self.assertEqual(
                 matrix[i].cell_mine, bool_matrix[i])
+
+    def test_fill_func_2(self):
+        grid_size = 3
+        matrix = main.init_matrix(grid_size)
+        matrix[0].set_mine()
+        matrix[4].set_mine()
+        matrix[8].set_mine()
+        mines_found = 0
+
+        main.fill_func(2, 2, 3, matrix)
+        bool_matrix = [True, False, False,
+                       False, True, False,
+                       False, False, True]
+        for i in range(grid_size*grid_size):
+            if bool_matrix[i]:
+                mines_found += 1
+        self.assertEqual(mines_found, 3)
 
 
 class TestAssets(unittest.TestCase):
